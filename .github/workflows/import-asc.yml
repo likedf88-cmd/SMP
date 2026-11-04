@@ -1,0 +1,34 @@
+name: import-asc
+
+# One-shot importer: copies the public Avatarverse source tree from
+# likedf88-cmd/webser into this repository, then is removed again.
+on:
+  push:
+    paths:
+      - '.github/workflows/import-asc.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    if: contains(github.event.head_commit.message, 'import-asc')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: smp
+          ref: main
+      - name: Copy source from webser
+        run: |
+          git clone --depth 1 https://github.com/likedf88-cmd/webser.git asc
+          rsync -a --exclude '.git' asc/ smp/
+      - name: Commit and push import
+        working-directory: smp
+        run: |
+          git config user.name "likedf88-cmd"
+          git config user.email "314104994+likedf88-cmd@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then echo "nothing to import"; exit 0; fi
+          git commit -m "Import Avatarverse platform with 3D Avatar Studio"
+          git push origin HEAD:main
